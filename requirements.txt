@@ -1,0 +1,13 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy
+scipy
+opencv-python-headless
+scikit-image
+pandas
+tabulate
+torch
+gradio>=4.44
+# metrics (needed for LPIPS / NIQE columns; evaluation only, not needed by the app)
+lpips
+pyiqa
+pytest

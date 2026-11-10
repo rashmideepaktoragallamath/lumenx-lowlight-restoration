@@ -1,0 +1,29 @@
+flowchart TD
+  IN["Input image<br/>utils.sanitize_image: gray / RGBA / 16-bit / NaN to float RGB"] --> AN
+  AN["analysis.analyze<br/>mean and median luminance, dark fraction, noise sigma (Immerkaer),<br/>local contrast, illumination non-uniformity, bright fraction"] --> POL
+  POL["analysis.choose_params (rule-based policy)<br/>gamma, denoise strength, CLAHE clip and tile, WB strength,<br/>saturation, curve iterations, blend threshold"]
+  POL --> DN
+  subgraph CL["Classical branch (classical.py)"]
+    DN["Edge-preserving denoise<br/>guided + bilateral"] --> IL["Illumination L<br/>max-RGB refined by guided filter"]
+    IL --> RX["Retinex R = I / L, J = R * L^gamma"] --> CH["CLAHE on Lab L"] --> WB["Partial shades-of-gray WB + saturation"]
+  end
+  subgraph DLB["Deep branch (zerodce.py)"]
+    ZD["Zero-DCE++ DCENet<br/>8 curve iterations, input = RGB + illumination prior (4 ch)"]
+  end
+  DN --> ZD
+  IL -. "4th input channel" .-> ZD
+  WB --> C(("C"))
+  ZD --> D(("D"))
+  IL --> BW["fusion.blend_weight_map<br/>sigmoid(threshold - L), guided-filter refined"]
+  C --> B(("B = w*D + (1-w)*C"))
+  D --> B
+  BW --> B
+  C --> QS
+  D --> QS
+  B --> QS["fusion.quality_select<br/>no-reference score: exposure, clipping, colour cast, noise, entropy<br/>soft-min weights over C, D, B"]
+  QS --> DT["fusion.detail_transfer<br/>damped by noise level"] --> TM["fusion.soft_tonemap<br/>hue-preserving highlight shoulder"] --> OUT["Enhanced output<br/>+ intermediates: illumination, reflectance, blend map"]
+  OUT --> UI["Gradio app.py / run_inference.py / evaluate.py"]
+  subgraph TR["Offline training (train.py)"]
+    DS["LOL our485 leakage-safe split<br/>395 train / 66 val / 15 test"] --> LS["Zero-DCE losses + L1 + SSIM<br/>best checkpoint by validation PSNR"] --> W[("weights/*.pt")]
+  end
+  W -.-> ZD

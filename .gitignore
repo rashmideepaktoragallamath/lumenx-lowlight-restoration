@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/
+results/final/
+weights/*_last.pt
+.env
+*.log
