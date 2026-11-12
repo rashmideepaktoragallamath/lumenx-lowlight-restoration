@@ -48,4 +48,3 @@ Colab version: `notebooks/train_colab.ipynb`.
 * **Baseline v0** results in `docs/AUDIT_AND_BASELINE_V0.md` used demo-only weights (200 steps, 6 synthetic photos). They are not the capability of the architecture.
 * After the training run above, `weights/` holds checkpoints selected on the validation split and `eval_P1_<T01>.md` holds the final numbers.
 See `docs/DESIGN.md` for method, limitations and ethics, and `docs/FAILURE_ANALYSIS.md` for failure cases.
-
