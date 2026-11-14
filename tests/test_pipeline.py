@@ -60,5 +60,16 @@ def test_invalid_inputs_raise_clear_error(bad):
         sanitize_image(bad)
 
 
+def test_noise_estimate_tracks_noise_in_very_dark_images():
+    from lowlight.analysis import analyze, choose_params
+    rng = np.random.default_rng(3)
+    base = _scene() * 0.04
+    levels = []
+    for s in (0.0, 0.002, 0.005, 0.01):
+        img = np.clip(base + rng.normal(0, s, base.shape), 0, 1).astype(np.float32)
+        levels.append(choose_params(analyze(img))["noise_level"])
+    assert levels == sorted(levels) and levels[-1] > levels[0] + 0.2   # adaptivity now responds
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

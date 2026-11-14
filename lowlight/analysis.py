@@ -6,9 +6,12 @@ from scipy.stats import skew
 from .utils import luminance
 
 
-def estimate_noise_sigma(img):
-    """Immerkaer fast noise-variance estimate on luminance (returns sigma in [0,1] units)."""
-    g = luminance(img) * 255.0
+def estimate_noise_sigma(img, lift=False):
+    """Immerkaer fast noise-variance estimate on luminance (returns sigma in [0,1] units).
+    lift=True measures noise on a gamma-lifted (x^0.45) copy. In very dark images the raw sigma is
+    tiny because the signal is tiny, so the policy never saw them as noisy; lifting makes the
+    estimate track real noise. The evaluation metrics keep lift=False so comparisons are unchanged."""
+    g = luminance(np.power(np.clip(img, 0, 1), 0.45) if lift else img) * 255.0
     h, w = g.shape
     k = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]], np.float32)
     conv = cv2.filter2D(g.astype(np.float32), -1, k)[1:-1, 1:-1]
@@ -44,7 +47,7 @@ def analyze(img):
         median_lum=float(np.median(lum)),
         dark_frac=float((v < 0.1).mean()),
         skewness=float(skew(small.ravel())),
-        noise_sigma=estimate_noise_sigma(img),
+        noise_sigma=estimate_noise_sigma(img, lift=True),
         local_contrast=float(cv2.GaussianBlur((small - blur) ** 2, (0, 0), 3).mean() ** 0.5),
         nonuniformity=float(blur.std() / (blur.mean() + 1e-6)),
         bright_frac=float((v > 0.85).mean()),
