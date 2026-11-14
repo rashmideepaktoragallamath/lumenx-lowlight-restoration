@@ -71,5 +71,13 @@ def test_noise_estimate_tracks_noise_in_very_dark_images():
     assert levels == sorted(levels) and levels[-1] > levels[0] + 0.2   # adaptivity now responds
 
 
+def test_exposure_fusion_solution_runs_and_brightens():
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "alternatives"))
+    from exposure_fusion import enhance_fusion
+    low = _scene() * 0.05
+    out, _ = enhance_fusion(low.astype(np.float32))
+    assert out.shape == low.shape and np.isfinite(out).all() and luminance(out).mean() > luminance(low).mean() * 2
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
